@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text to Speech using jQuery</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Text to Speech using jQuery</h1>
+    <textarea id="inputText" rows="6" cols="50"></textarea><br>
+    <button id="speakButton">Ucapkan</button>
+    <button id="stopButton">Hentikan</button>
+    <script>
+        let utterance;
+        function speakText(texts) {
+            if (utterance && speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+            const speakNext = function (index) {
+                if (index < texts.length) {
+                    utterance = new SpeechSynthesisUtterance(texts[index]);
+                    utterance.lang = "id-ID";
+                    utterance.onend = function () {
+                        speakNext(index + 1);
+                    };
+                    speechSynthesis.speak(utterance);
+                } else {
+                    alert("Semua teks telah selesai dibaca.");
+                }
+            };
+            alert("Proses pembacaan dimulai.");
+            speakNext(0);
+        }
+        function stopSpeaking() {
+            if (utterance) {
+                speechSynthesis.cancel();
+            }
+        }
+        function splitStringIntoChunks(inputString, chunkSize) {
+            inputString = inputString.replace(/\n/g, ' ');
+            const chunks = [];
+            let currentIndex = 0;
+            while (currentIndex < inputString.length) {
+                let endIndex = currentIndex + chunkSize;
+                if (endIndex >= inputString.length) {
+                    chunks.push(inputString.slice(currentIndex));
+                    break;
+                }
+                let nextSeparatorIndex = inputString.lastIndexOf('.', endIndex);
+                if (nextSeparatorIndex === -1 || nextSeparatorIndex < currentIndex) {
+                    nextSeparatorIndex = inputString.lastIndexOf(',', endIndex);
+                    if (nextSeparatorIndex === -1 || nextSeparatorIndex < currentIndex) {
+                        nextSeparatorIndex = inputString.indexOf(' ', endIndex);
+                        if (nextSeparatorIndex === -1) {
+                            nextSeparatorIndex = endIndex;
+                        }
+                    }
+                }
+                chunks.push(inputString.slice(currentIndex, nextSeparatorIndex).trim());
+                currentIndex = nextSeparatorIndex + 1;
+            }
+            return chunks;
+        }
+        $(document).ready(function () {
+            $("#speakButton").click(function () {
+                const inputText = $("#inputText").val();
+                const chunkSize = 200;
+                const chunks = splitStringIntoChunks(inputText, chunkSize);
+                speakText(chunks);
+            });
+            $("#stopButton").click(stopSpeaking);
+        });
+    </script>
+</body>
+</html>
